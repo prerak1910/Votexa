@@ -14,6 +14,8 @@ function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const [emailTouched, setEmailTouched] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [serverMessage, setServerMessage] = useState("");
 
     useEffect(() => {
         document.title = "Create Account | Votexa";
@@ -168,15 +170,43 @@ function Register() {
     }
 
     // Form submission
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
+            event.preventDefault();
 
-        event.preventDefault();
+            setEmailTouched(true);
+            setServerMessage("");
 
-        setEmailTouched(true);
+            if (!validateForm()) return;
 
-        if (!validateForm()) return;
+            setLoading(true);
 
-        alert("Registration form submitted successfully!");
+            try {
+                const response = await fetch("http://127.0.0.1:5000/api/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || "Registration failed");
+                }
+
+                setServerMessage(data.message);
+
+            } catch (error) {
+                setServerMessage(error.message || "Unable to connect to server.");
+            } finally {
+                setLoading(false);
+            }
+
     }
 
     return (
@@ -557,13 +587,20 @@ function Register() {
 
                             {/* Submit Button */}
 
-                            <button
+                           <button
                                 type="submit"
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-indigo-200 transition cursor-pointer flex items-center justify-center gap-2"
+                                disabled={loading}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-indigo-200 transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                Create Account
-                                <ArrowRight size={18} />
-                            </button>
+                                {loading ? "Creating Account..." : "Create Account"}
+                                {!loading && <ArrowRight size={18} />}
+                           </button>
+
+                        {serverMessage && (
+                            <p className="text-center text-sm mt-4 text-indigo-600">
+                                {serverMessage}
+                            </p>
+                        )}
 
                         </form>
 
