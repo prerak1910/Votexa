@@ -14,6 +14,7 @@ function Login() {
     const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
+    const [serverMessage, setServerMessage] = useState("");
 
     useEffect(() => {
         document.title = "Login | Votexa";
@@ -75,25 +76,64 @@ function Login() {
     }
 
     async function handleSubmit(event) {
+    event.preventDefault();
 
-        event.preventDefault();
+    if (loading) return;
 
-        if (loading) return;
+    if (!validateForm()) return;
 
-        if (!validateForm()) return;
+    setLoading(true);
+    setServerMessage("");
 
-        setLoading(true);
+    try {
+        const response = await fetch("http://127.0.0.1:5000/api/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        });
 
-        try {
-            // Temporary login simulation
-            await new Promise(resolve => setTimeout(resolve, 2000));
+        const data = await response.json();
 
-            alert("Login form submitted successfully!");
-
-        } finally {
-            setLoading(false);
+        if (!response.ok) {
+            throw new Error(data.message || "Login failed.");
         }
+
+        // Store JWT temporarily in sessionStorage
+        sessionStorage.setItem("access_token", data.access_token);
+
+// Store user information
+        sessionStorage.setItem("user", JSON.stringify(data.user));
+        const profileResponse = await fetch(
+                "http://127.0.0.1:5000/api/profile",
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${data.access_token}`
+                    }
+                }
+            );
+
+            const profileData = await profileResponse.json();
+
+            if (!profileResponse.ok) {
+                throw new Error(profileData.msg || "Unable to fetch profile.");
+            }
+
+            console.log("Authenticated user:", profileData.user);
+
+        setServerMessage("Login successful!");
+
+    } catch (error) {
+        setServerMessage(error.message || "Unable to connect to server.");
+    } finally {
+        setLoading(false);
     }
+}
 
     return (
 
@@ -421,6 +461,12 @@ function Login() {
                                 {!loading && <ArrowRight size={18} />}
 
                             </button>
+
+                            {serverMessage && (
+                                <p className="text-center text-sm mt-4 text-indigo-600">
+                                    {serverMessage}
+                                </p>
+                            )}
 
                         </form>
 
