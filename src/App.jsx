@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ProtectedRoute from "./components/ProtectedRoute";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
     return (
@@ -14,7 +15,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
                 <Route
                     path="/dashboard"
-                    element={<h1>Welcome to Votexa Dashboard!</h1>}
+                    element={<Dashboard />}
                 />
             </Route>
         </Routes>
