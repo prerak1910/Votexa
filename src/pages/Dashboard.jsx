@@ -2,6 +2,8 @@ import DashboardSidebar from "../components/DashboardSidebar";
 import DashboardNavbar from "../components/DashboardNavbar";
 import StatCard from "../components/StatCard";
 import RecentElections from "../components/RecentElections";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 
 import {
@@ -12,6 +14,79 @@ import {
 } from "lucide-react";  
 
 function Dashboard() {
+
+    const navigate = useNavigate();
+
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+
+    async function fetchProfile() {
+
+        const token = sessionStorage.getItem("access_token");
+
+        if (!token) {
+            navigate("/login", { replace: true });
+            return;
+        }
+
+        try {
+
+            const response = await fetch(
+                "http://127.0.0.1:5000/api/profile",
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Session expired.");
+            }
+
+            setUser(data.user);
+
+            sessionStorage.setItem(
+                "user",
+                JSON.stringify(data.user)
+            );
+
+        } catch (error) {
+
+            sessionStorage.removeItem("access_token");
+            sessionStorage.removeItem("user");
+
+            setError(error.message);
+
+            navigate("/login", { replace: true });
+
+        } finally {
+
+            setLoading(false);
+
+        }
+    }
+
+    fetchProfile();
+
+}, [navigate]);
+
+    if (loading) {
+    return (
+            <div className="min-h-screen flex items-center justify-center">
+                <p className="text-gray-500 text-lg">
+                    Loading your dashboard...
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className="flex min-h-screen bg-gray-50">
 

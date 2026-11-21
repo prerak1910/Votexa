@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     Eye, EyeOff, ShieldCheck, CheckCircle2,
     Vote, Users, ChartNoAxesCombined, ArrowRight
@@ -8,6 +8,7 @@ import {
 
 function Login() {
 
+    const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -126,7 +127,13 @@ function Login() {
 
             console.log("Authenticated user:", profileData.user);
 
-        setServerMessage("Login successful!");
+            // Store user information after successful profile verification
+            sessionStorage.setItem("user", JSON.stringify(profileData.user));
+
+            setServerMessage("Login successful!");
+
+            // Redirect to dashboard
+            navigate("/elections");
 
     } catch (error) {
         setServerMessage(error.message || "Unable to connect to server.");

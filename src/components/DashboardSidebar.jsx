@@ -1,34 +1,27 @@
 import {
-    LayoutDashboard,
     Vote,
-    Building2,
-    Users,
-    Settings,
-    ShieldCheck
+    FolderOpen,
+    UserRound,
+    Settings
 } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
 
 const navigationItems = [
     {
-        name: "Dashboard",
-        icon: LayoutDashboard,
-        path: "/dashboard",
-    },
-    {
-        name: "Elections",
+        name: "All Elections",
         icon: Vote,
         path: "/elections",
     },
     {
-        name: "Organizations",
-        icon: Building2,
-        path: "/organizations",
+        name: "My Elections",
+        icon: FolderOpen,
+        path: "/my-elections",
     },
     {
-        name: "Candidates",
-        icon: Users,
-        path: "/candidates",
+        name: "Profile",
+        icon: UserRound,
+        path: "/profile",
     },
     {
         name: "Settings",
@@ -40,12 +33,6 @@ const navigationItems = [
 function DashboardSidebar() {
     return (
         <aside className="w-64 min-h-screen bg-slate-950 text-white flex flex-col p-6">
-
-            {/* Logo */}
-            <h1 className="text-2xl font-bold mb-10 flex items-center gap-2">
-                <ShieldCheck size={28} className="text-indigo-400" />
-                Votexa
-            </h1>
 
             {/* Navigation */}
             <nav className="space-y-2">

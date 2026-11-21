@@ -1,0 +1,637 @@
+PHASE 1 — Foundation and Authentication
+Status: COMPLETE
+Objective
+Build the foundation of Votexa, establish communication between frontend and backend, and implement user authentication.
+Frontend
+- React + Vite setup.
+- Project folder structure.
+- Login page.
+- Registration page.
+- React Router.
+- Form validation.
+- Password visibility toggle.
+- Password strength indicator.
+- Protected routes.
+- Session management.
+Backend
+- Flask application setup.
+- Flask-CORS.
+- API endpoints.
+- Registration API.
+- Login API.
+- Password hashing.
+- JWT generation.
+- JWT verification.
+- Protected profile endpoint.
+Database
+- PostgreSQL installation.
+- Database creation.
+- SQLAlchemy configuration.
+- Users table.
+- Unique email constraint.
+- Password hash storage.
+Completion criteria
+A user can:
+1. Register an account.
+2. Have their details saved in PostgreSQL.
+3. Log in using their credentials.
+4. Receive a JWT.
+5. Access protected routes.
+6. Log out.
+Status: Completed. No unnecessary redesign of the login or registration pages.
+PHASE 2 — Dashboard and Application Structure
+Status: UI COMPLETE; FUNCTIONALITY PENDING
+Objective
+Build the common user dashboard and platform admin dashboard.
+
+Remember, we have decided to maintain only two dashboards.
+A. Common User Dashboard
+This dashboard will be used by everyone except the platform admin's administrative interface.
+
+It should contain:
+Section	Functionality
+Overview	Election statistics and recent activity
+All Elections	Browse approved elections
+My Elections	Elections created by the logged-in user
+My Participation	Elections the user has registered for
+Create Election	Start creating an election
+Profile	View and update account details
+Settings	Account and security settings
+
+
+The dashboard should dynamically show information based on the logged-in user.
+
+For example, if a user has created two elections and registered for five others, those numbers should come from PostgreSQL, not hardcoded values.
+B. Platform Admin Dashboard
+A separate administrative interface.
+
+It should contain:
+Section	Functionality
+Overview	Platform statistics
+Pending Elections	Elections awaiting approval
+All Elections	View all platform elections
+Verification Requests	Review organization authorization
+Active Elections	Monitor ongoing elections
+Completed Elections	View completed elections
+Suspended Elections	Manage suspended elections
+
+
+Backend
+- User-specific dashboard API.
+- Platform admin authorization.
+- Dashboard statistics APIs.
+- Election listing APIs.
+- Role and permission middleware.
+Database
+Add:
+- Platform admin role or an equivalent secure authorization mechanism.
+- Election-related database foundations in preparation for Phase 3.
+Completion criteria
+- Normal users see the common dashboard.
+- Platform admins see the admin dashboard.
+- Statistics come from the backend.
+- Dashboard information is specific to the logged-in user.
+- Unauthorized users cannot access admin APIs.
+Important: We will finish the current dashboard functionality before moving to election creation.
+PHASE 3 — Election Creation and Organization Verification
+Estimated duration: 6–7 active days
+
+This is where Votexa's actual core functionality begins.
+Objective
+Allow registered users to create elections and submit them for platform approval.
+A. Election Creation Interface
+The creator clicks:
+
+Create Election → Create New Election
+
+We will implement a multi-section form.
+
+Section 1: Basic Information
+- Election title.
+- Description.
+- Organization name.
+- Organization category.
+- Organization website/contact details.
+Section 2: Authorization
+- Creator's designation.
+- Official email/contact information.
+- Authorization document upload.
+- Supporting information.
+Section 3: Positions
+- Add positions.
+- Remove positions.
+- Edit positions.
+- Define the number of winners for each position.
+Section 4: Election Schedule
+- Nomination opening and closing dates.
+- Voter registration opening and closing dates.
+- Voting opening and closing dates.
+Section 5: Election Rules
+- Open registration or invitation-based registration.
+- Candidate application requirements.
+- Voter eligibility requirements.
+- Result publication settings.
+Section 6: Review
+- Display the complete election configuration.
+- Allow editing.
+- Submit for approval.
+B. AI Election Creation Assistant
+This will be our first major AI feature.
+
+The user can describe an election in natural language.
+
+For example:
+
+"I want to conduct an election for the LNMIIT ACM Club. We need to elect a President, Vice President and Secretary."
+
+Gemini will generate a structured election draft.
+
+The user will:
+1. Enter a description.
+2. Receive a structured draft.
+3. Review the generated information.
+4. Edit anything necessary.
+5. Confirm and submit.
+AI will never automatically approve or publish elections.
+C. Platform Admin Approval
+The submitted election appears in the admin dashboard.
+
+Admin actions:
+- Approve.
+- Reject.
+- Request changes.
+Organization authorization proof will be reviewed as part of this process.
+
+The election becomes publicly visible only after approval.
+Database tables
+We will introduce:
+- elections
+- positions
+- election_documents
+We will also define appropriate relationships with the existing users table.
+Completion criteria
+A registered user can create an election, upload authorization proof, and submit it.
+
+The platform admin can review it and approve, reject or request changes.
+
+An approved election appears in the common user's All Elections section.
+PHASE 4 — Candidate Management and Voter Registration
+Estimated duration: 5–6 active days
+
+This phase implements the participation workflow we finalized.
+Objective
+Allow users to apply as candidates, register as voters, and let election creators approve both.
+A. Election Details Page
+When someone opens an election, they should see:
+- Organization information.
+- Election description.
+- Available positions.
+- Candidate information.
+- Election schedule.
+- Registration status.
+- Voting status.
+Two primary actions:
+
+Apply as Candidate
+
+Register as Voter
+
+A user can choose both.
+B. Candidate Application
+The candidate application form includes:
+- Position selection.
+- Introduction.
+- Why they want the position.
+- Supporting information.
+- Optional profile photograph.
+After submission, the application goes to the election creator.
+
+The creator can:
+- Approve.
+- Reject.
+Approved candidates appear on the election ballot after nominations close.
+C. Voter Registration
+Users can request voter participation.
+
+The coordinator can:
+- View voter applications.
+- Approve applications.
+- Reject applications.
+We will also support invitation-based registration.
+D. Creator's Election Management Interface
+The creator needs a dedicated management page for their own election.
+
+It should include:
+- Election overview.
+- Candidate applications.
+- Voter applications.
+- Approved candidates.
+- Approved voters.
+- Election schedule.
+Remember: the creator is the only coordinator.
+Database tables
+- candidate_applications
+- voter_registrations
+- voter_invitations
+Completion criteria
+A user can apply as a candidate and register as a voter.
+
+The creator can approve or reject both independently.
+
+The candidate can also be an approved voter.
+
+Every approved voter is eligible to vote for every position in that election.
+PHASE 5 — Core Voting Engine and Privacy
+Estimated duration: 7–8 active days
+
+This is arguably the most technically important phase of Votexa.
+
+We need to be particularly careful here.
+Objective
+Implement a functional voting system with duplicate-vote prevention and separation of voter identity from ballot choices.
+A. Voting Interface
+When voting opens, an approved voter sees their ballot.
+
+For example:
+
+President
+- Candidate A
+- Candidate B
+- Candidate C
+Vice President
+- Candidate D
+- Candidate E
+Secretary
+- Candidate F
+- Candidate G
+The voter selects one candidate per position.
+
+Before submission, display a confirmation screen.
+
+After confirmation, the ballot is submitted.
+B. Voting Rules
+The backend must enforce:
+1. Only approved voters can vote.
+2. Voting is permitted only during the configured voting period.
+3. Each voter can submit only one ballot per election.
+4. Every approved voter can vote for every position.
+5. A candidate can vote if they are also an approved voter.
+6. Votes cannot be modified after submission in the initial version.
+7. The creator cannot view individual voting choices.
+8. The platform admin cannot view individual voting choices.
+C. Voting Privacy Architecture
+We will not directly store:
+
+user_id → candidate_id
+
+Instead, we will design a privacy-preserving voting flow.
+
+Conceptually:
+Voter Identity
+      |
+      v
+Eligibility Verification
+      |
+      v
+One-time Voting Authorization
+      |
+      v
+Anonymous Ballot Submission
+      |
+      v
+Ballot Storage
+      |
+      v
+Aggregate Results
+
+We need to carefully implement:
+- One-time voting authorization.
+- Separation of voter participation records and ballots.
+- Database constraints.
+- Atomic transactions.
+- Duplicate submission prevention.
+- Protection against accidental identity leakage through logs and timestamps.
+Important: Separating tables alone does not guarantee anonymity. We must design the token and ballot flow carefully. We should describe the finished project as privacy-conscious, not cryptographically anonymous or suitable for certified public elections without further security work.
+Database tables
+- ballots
+- ballot_selections
+We will also finalize the voter authorization mechanism.
+Completion criteria
+A registered and approved voter can successfully cast a ballot.
+
+Duplicate votes are rejected by the backend.
+
+Individual voting choices cannot be retrieved through normal admin or coordinator interfaces.
+PHASE 6 — Results, Analytics and AI Reports
+Estimated duration: 4–5 active days
+Objective
+Calculate election results and provide meaningful reports.
+A. Result Calculation
+The backend calculates:
+- Votes received by each candidate.
+- Position-wise winner.
+- Total eligible voters.
+- Total votes cast.
+- Voter turnout percentage.
+For example:
+Candidate	Votes
+Candidate A	120
+Candidate B	85
+Candidate C	45
+
+
+The backend determines the winner.
+
+AI will not calculate results.
+B. Results Dashboard
+The coordinator can view:
+- Position-wise results.
+- Candidate vote counts.
+- Turnout statistics.
+- Overall election summary.
+Public result visibility will follow the election's configured settings.
+C. AI Election Report Generator
+This will be our second major AI feature.
+
+The user clicks:
+
+Generate AI Report
+
+Gemini receives verified aggregate information from the backend.
+
+It generates a report containing:
+- Election overview.
+- Organization details.
+- Participation statistics.
+- Position-wise results.
+- Winners.
+- Summary and observations.
+We can add downloadable PDF reports as part of this phase.
+
+Privacy rule: The AI must never receive voter identities or individual ballot selections.
+Database tables
+- election_results
+Completion criteria
+Results are correctly calculated by the backend.
+
+The coordinator can view them.
+
+The AI can generate a report from verified aggregate data.
+PHASE 7 — Notifications, Validation and Security
+Estimated duration: 4–5 active days
+
+A working application needs more than successful API calls.
+
+This phase makes Votexa reliable.
+A. Notifications
+Implement notifications for:
+- Election submission.
+- Election approval or rejection.
+- Candidate application submission.
+- Candidate approval or rejection.
+- Voter registration approval or rejection.
+- Election starting.
+- Voting closing.
+- Results publication.
+Email notifications can be added using a free email service or a suitable SMTP setup, subject to service limits.
+B. Security
+Review:
+- JWT authentication.
+- Password security.
+- Backend authorization.
+- Input validation.
+- SQL injection protection through parameterized ORM queries.
+- File upload validation.
+- File access permissions.
+- Rate limiting for sensitive endpoints.
+- CORS configuration.
+- Secret management.
+C. Election Validation
+Prevent:
+- Invalid date sequences.
+- Voting before registration closes.
+- Applications after nomination deadlines.
+- Unauthorized election modifications.
+- Unauthorized candidate approvals.
+- Unauthorized voter approvals.
+- Voting outside the election period.
+- Invalid candidate selections.
+D. Error Handling
+Every important workflow should have:
+- Loading states.
+- Success messages.
+- Error messages.
+- Empty states.
+- Retry behavior where appropriate.
+Completion criteria
+The application handles invalid inputs and unauthorized requests correctly.
+
+Critical workflows are tested, not just the happy path.
+PHASE 8 — Complete Frontend Integration and UI Polish
+Estimated duration: 3–4 active days
+
+Some frontend work will happen during earlier phases, but this is the final integration and polish phase.
+Objective
+Ensure every page is connected to actual backend functionality.
+
+We will review:
+- Login and registration.
+- Common dashboard.
+- Admin dashboard.
+- Election creation.
+- Election details.
+- Candidate application.
+- Voter registration.
+- Election management.
+- Voting interface.
+- Results dashboard.
+- AI report generation.
+- Profile and settings.
+We will also implement:
+- Responsive layouts.
+- Consistent styling.
+- Loading indicators.
+- Error boundaries.
+- Navigation consistency.
+- Proper redirects.
+- Empty-state designs.
+Important: We will not waste time redesigning already-good login and registration pages unless integration reveals an actual issue.
+Completion criteria
+No major page depends on hardcoded dummy data.
+
+The application is navigable from beginning to end.
+PHASE 9 — Deployment, Final Testing and Documentation
+Estimated duration: 4–5 active days
+
+This is the final phase.
+A. Full Workflow Testing
+We will simulate a complete election.
+
+Example:
+1. User A registers.
+2. User A creates an election.
+3. User A uploads authorization proof.
+4. Platform Admin approves the election.
+5. User B applies as a candidate.
+6. User C registers as a voter.
+7. Election creator approves both.
+8. User B is also approved as a voter.
+9. Voting begins.
+10. User B and User C cast votes.
+11. Duplicate voting is attempted and rejected.
+12. Voting closes.
+13. Backend calculates results.
+14. Results are published.
+15. AI generates the election report.
+We will also test rejection, unauthorized access, invalid dates, and privacy-related failure cases.
+B. Deployment
+Frontend:
+- Vercel or another suitable free-tier hosting service.
+Backend:
+- Render or another suitable free-tier hosting service.
+Database:
+- PostgreSQL hosting with an appropriate free tier.
+We will check current free-tier limits before selecting providers.
+C. GitHub and Documentation
+Complete:
+- README.
+- Project architecture diagram.
+- Database ER diagram.
+- API documentation.
+- Feature documentation.
+- Setup instructions.
+- Screenshots.
+- Demo video.
+D. Final Deliverable
+A working Votexa application accessible through a public deployment URL, with a documented GitHub repository.
+Development Timeline
+Now let's fit everything into your actual calendar.
+
+We have approximately 44 active development days between November 20 and January 15, excluding the December 3–15 exam break.
+
+Here is the target allocation:
+Phase	Target duration	Target completion
+Phase 1: Foundation and Authentication	Already complete	Completed
+Phase 2: Dashboard and Application Structure	2 active days	November 22
+Phase 3: Election Creation and Verification	7 active days	November 30
+Exam Break	No development	December 3–15
+Phase 4: Candidates and Voters	6 active days	December 22
+Phase 5: Voting Engine and Privacy	8 active days	December 30
+Phase 6: Results and AI Reports	5 active days	January 5
+Phase 7: Security and Notifications	5 active days	January 10
+Phase 8: Frontend Integration and Polish	3 active days	January 13
+Phase 9: Deployment and Documentation	2 active days	January 15
+
+
+These are target dates, not guaranteed completion dates. The voting engine and privacy architecture are the biggest uncertainties. If they take longer, we should reduce optional polish or notification features rather than compromise voting correctness.
+Recommended Project Folder Structure
+As the project grows, we should gradually move toward a more organized architecture.
+
+I recommend this eventual structure:
+Votexa/
+│
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── models/
+│   │   │   ├── user.py
+│   │   │   ├── election.py
+│   │   │   ├── candidate.py
+│   │   │   ├── voter.py
+│   │   │   └── ballot.py
+│   │   │
+│   │   ├── routes/
+│   │   │   ├── auth.py
+│   │   │   ├── elections.py
+│   │   │   ├── candidates.py
+│   │   │   ├── voters.py
+│   │   │   ├── voting.py
+│   │   │   ├── results.py
+│   │   │   └── admin.py
+│   │   │
+│   │   ├── services/
+│   │   │   ├── election_service.py
+│   │   │   ├── voting_service.py
+│   │   │   ├── result_service.py
+│   │   │   └── ai_service.py
+│   │   │
+│   │   ├── utils/
+│   │   │   ├── validators.py
+│   │   │   └── permissions.py
+│   │   │
+│   │   └── extensions.py
+│   │
+│   ├── migrations/
+│   ├── requirements.txt
+│   ├── .env
+│   └── run.py
+│
+├── src/
+│   ├── components/
+│   ├── pages/
+│   │   ├── Login.jsx
+│   │   ├── Register.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── AdminDashboard.jsx
+│   │   ├── CreateElection.jsx
+│   │   ├── ElectionDetails.jsx
+│   │   ├── CandidateApplication.jsx
+│   │   ├── VoterRegistration.jsx
+│   │   ├── VotingPage.jsx
+│   │   └── ResultsPage.jsx
+│   │
+│   ├── services/
+│   │   ├── api.js
+│   │   ├── authService.js
+│   │   └── electionService.js
+│   │
+│   ├── context/
+│   ├── hooks/
+│   ├── App.jsx
+│   └── main.jsx
+│
+├── README.md
+└── package.json
+
+We won't create every file immediately. We'll introduce folders and modules as each phase requires them.
+How we will work through each phase
+I want to establish a development rule because you have repeatedly mentioned that you want to understand the project rather than simply copy code.
+
+For every feature, we'll follow this sequence:
+
+1. Understand
+
+I'll explain what we're building, why it's needed, and how it works.
+
+2. Architecture
+
+We'll decide the frontend flow, backend API, database changes, and permissions.
+
+3. Implementation
+
+We'll write the code in manageable pieces.
+
+4. Testing
+
+You'll run it locally, test normal cases and failure cases, and understand the results.
+
+5. Git checkpoint
+
+Once the feature works, we'll commit and push it to GitHub.
+
+6. Documentation
+
+We'll update the Master Project Document so that our architecture and actual implementation remain synchronized.
+
+We will not jump into the next feature until the current one is working.
+My recommendations: What we should prioritize
+There are three parts of Votexa that will matter most technically and during a resume discussion:
+Priority	Component	Why it matters
+1	Voting engine and privacy	Demonstrates backend design, transactions and security thinking
+2	Election lifecycle and authorization	Demonstrates database relationships, RBAC and business logic
+3	AI integration	Differentiates the project and demonstrates practical AI integration
+
+
+The dashboard design is important, but it is not what will make Votexa technically impressive.
+
+Also, we should not claim that Votexa is suitable for official government elections. It is an organization-focused election management prototype, and its privacy and security claims should accurately reflect what we implement and test.
