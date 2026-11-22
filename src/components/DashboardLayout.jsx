@@ -7,7 +7,9 @@ import DashboardNavbar from "./DashboardNavbar";
 function DashboardLayout() {
     const [loading, setLoading] = useState(true);
     const [authenticated, setAuthenticated] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
+    // 1. Verify user authentication
     useEffect(() => {
         async function verifyProfile() {
             const token = sessionStorage.getItem("access_token");
@@ -42,7 +44,7 @@ function DashboardLayout() {
 
                 setAuthenticated(true);
 
-            } catch (error) {
+            } catch {
                 sessionStorage.removeItem("access_token");
                 sessionStorage.removeItem("user");
                 setAuthenticated(false);
@@ -55,6 +57,20 @@ function DashboardLayout() {
         verifyProfile();
     }, []);
 
+    // 2. Prevent background scrolling when sidebar is open
+    useEffect(() => {
+        if (sidebarOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [sidebarOpen]);
+
+    // 3. Loading screen
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -65,20 +81,27 @@ function DashboardLayout() {
         );
     }
 
+    // 4. Redirect unauthenticated users
     if (!authenticated) {
         return <Navigate to="/login" replace />;
     }
 
+    // 5. Dashboard layout with independent scrolling
     return (
-        <div className="flex min-h-screen bg-gray-50">
+        <div className="flex h-screen overflow-hidden bg-gray-50">
 
-            <DashboardSidebar />
+            <DashboardSidebar
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+            />
 
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
 
-                <DashboardNavbar />
+                <DashboardNavbar
+                    onMenuClick={() => setSidebarOpen(true)}
+                />
 
-                <main className="p-8">
+                <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
                     <Outlet />
                 </main>
 

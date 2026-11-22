@@ -11,7 +11,8 @@ from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity
 )
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
+from functools import wraps
 import os
 
 # Load environment variables
@@ -46,6 +47,96 @@ class User(db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.Text, nullable=False)
 
+    role = db.Column(
+    db.String(20),
+    nullable=False,
+    default="user",
+    server_default="user"
+    )
+
+    # ---------------- ELECTION MODEL ----------------
+
+class Election(db.Model):
+
+    __tablename__ = "elections"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    organization_name = db.Column(db.String(200), nullable=False)
+
+    created_by = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False
+    )
+
+    approval_status = db.Column(
+        db.String(30),
+        nullable=False,
+        default="draft"
+    )
+
+    is_published = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False
+    )
+
+    voting_starts_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False
+    )
+
+    voting_ends_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc)
+    )
+
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+
+
+# ---------------- ADMIN AUTHORIZATION ----------------
+
+def admin_required(func):
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+
+        user_id = get_jwt_identity()
+
+        try:
+            user = db.session.get(User, int(user_id))
+        except (ValueError, TypeError):
+            user = None
+
+        if user is None:
+            return jsonify({
+                "success": False,
+                "message": "User not found."
+            }), 401
+
+        if user.role != "admin":
+            return jsonify({
+                "success": False,
+                "message": "Admin access required."
+            }), 403
+
+        return func(*args, **kwargs)
+
+    return wrapper
 
 # ---------------- HOME ROUTE ----------------
 
@@ -276,6 +367,71 @@ def profile():
             "name": user.name,
             "email": user.email
         }
+    }), 200
+
+# ---------------- GET ALL PUBLISHED ELECTIONS ----------------
+
+@app.route("/api/elections", methods=["GET"])
+@jwt_required()
+def get_elections():
+
+    try:
+
+        elections = Election.query.filter_by(
+            approval_status="approved",
+            is_published=True
+        ).order_by(Election.created_at.desc()).all()
+
+        current_time = datetime.now(timezone.utc)
+
+        election_list = []
+
+        for election in elections:
+
+            if current_time < election.voting_starts_at:
+                display_status = "Upcoming"
+
+            elif current_time <= election.voting_ends_at:
+                display_status = "Live"
+
+            else:
+                display_status = "Completed"
+
+            election_list.append({
+                "id": election.id,
+                "title": election.title,
+                "description": election.description,
+                "organization_name": election.organization_name,
+                "voting_starts_at": election.voting_starts_at.isoformat(),
+                "voting_ends_at": election.voting_ends_at.isoformat(),
+                "status": display_status
+            })
+
+        return jsonify({
+            "success": True,
+            "count": len(election_list),
+            "elections": election_list
+        }), 200
+
+    except Exception:
+
+        app.logger.exception("Failed to retrieve elections")
+
+        return jsonify({
+            "success": False,
+            "message": "Unable to retrieve elections."
+        }), 500
+
+# ---------------- ADMIN TEST ROUTE ----------------
+
+@app.route("/api/admin/test", methods=["GET"])
+@jwt_required()
+@admin_required
+def admin_test():
+
+    return jsonify({
+        "success": True,
+        "message": "Welcome to the Votexa Admin Dashboard!"
     }), 200
 
 # ---------------- RUN APPLICATION ----------------
